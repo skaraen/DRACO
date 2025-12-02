@@ -1,9 +1,6 @@
 import tkinter as tk
 
-
-
 class Whiteboard:
-
     def __init__(self, master):
         self.master = master
 
@@ -14,10 +11,10 @@ class Whiteboard:
         self.canvas_height = 400
         self.canvas_width = 800
 
-        self.label = tk.Label(master, text="User GUI", fg="#000000", font=("Arial", 32, "bold"))
+        self.label = tk.Label(master, text="User GUI", fg="#FFFFFF", font=("Arial", 32, "bold"))
         self.label.pack()
 
-        self.canvas = tk.Canvas(master, bg="white", width=self.canvas_width, height=self.canvas_height, bd=4, relief="sunken")
+        self.canvas = tk.Canvas(master, bg="white", width=self.canvas_width, height=self.canvas_height, bd=0, highlightthickness=0, relief="flat")
         self.canvas.pack(pady=20, padx=20)
 
         self.canvas.bind("<Button-1>", self.start_draw)
@@ -50,7 +47,8 @@ class Whiteboard:
 
     def draw(self, event):
         if self.is_drawing:
-            x, y = event.x, event.y
+            x = max(0, min(event.x, self.canvas_width))
+            y = max(0, min(event.y, self.canvas_height))
 
             self.canvas.create_line(self.last_x, self.last_y, x, y, fill="#000000", width=4, capstyle=tk.ROUND, joinstyle=tk.ROUND, tags="path")
             self.last_x = x
@@ -73,8 +71,10 @@ class Whiteboard:
         print("Canvas cleared")
 
 
+
     def get_paths(self):
         return self.current_segment
+
 
 if __name__ == '__main__':
     root = tk.Tk()
