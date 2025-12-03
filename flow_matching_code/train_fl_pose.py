@@ -28,19 +28,19 @@ if str(CURRENT_DIR) not in sys.path:
     sys.path.insert(0, str(CURRENT_DIR))
 
 try:
-    from flow_matching.path import AffineProbPath
-    from flow_matching.path.scheduler import CondOTScheduler
-    from flow_matching.solver import ODESolver
-    from flow_matching.utils import ModelWrapper as FMModelWrapper
+    from ..flow_matching.path import AffineProbPath
+    from ..flow_matching.path.scheduler import CondOTScheduler
+    from ..flow_matching.solver import ODESolver
+    from ..flow_matching.utils import ModelWrapper as FMModelWrapper
 except ImportError:
     # If flow_matching is not in path, try to add it
     FM_ROOT = Path(__file__).resolve().parent / "flow_matching"
     if FM_ROOT.exists():
         sys.path.insert(0, str(FM_ROOT))
-    from flow_matching.path import AffineProbPath
-    from flow_matching.path.scheduler import CondOTScheduler
-    from flow_matching.solver import ODESolver
-    from flow_matching.utils import ModelWrapper as FMModelWrapper
+    from ..flow_matching.path import AffineProbPath
+    from ..flow_matching.path.scheduler import CondOTScheduler
+    from ..flow_matching.solver import ODESolver
+    from ..flow_matching.utils import ModelWrapper as FMModelWrapper
 
 # Import transformer from local flow_matching folder
 from transformer import make_transformer
