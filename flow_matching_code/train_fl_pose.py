@@ -43,7 +43,7 @@ except ImportError:
     from ..flow_matching.utils import ModelWrapper as FMModelWrapper
 
 # Import transformer from local flow_matching folder
-from transformer import make_transformer
+from ..transformer import make_transformer
 
 
 class JointToPoseDataset(Dataset):
