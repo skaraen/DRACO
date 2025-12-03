@@ -1,4 +1,7 @@
 import tkinter as tk
+from tkinter import filedialog
+import numpy as np
+from pathlib import Path
 
 class Whiteboard:
     def __init__(self, master):
@@ -7,9 +10,10 @@ class Whiteboard:
         master.title("DRACO")
         self.is_drawing = False
         self.current_segment = []
+        self.all_poses = []  # Store all poses in drawing order
 
         self.canvas_height = 400
-        self.canvas_width = 800
+        self.canvas_width = 400
 
         self.label = tk.Label(master, text="User GUI", fg="#FFFFFF", font=("Arial", 32, "bold"))
         self.label.pack()
@@ -21,8 +25,14 @@ class Whiteboard:
         self.canvas.bind("<B1-Motion>", self.draw)
         self.canvas.bind("<ButtonRelease-1>", self.stop_draw)
 
-        self.clear_button = tk.Button(master, text="Clear", command=self.clear_canvas, font=("Arial", 18))
-        self.clear_button.pack(pady=10)
+        button_frame = tk.Frame(master)
+        button_frame.pack(pady=10)
+        
+        self.clear_button = tk.Button(button_frame, text="Clear", command=self.clear_canvas, font=("Arial", 18))
+        self.clear_button.pack(side=tk.LEFT, padx=5)
+        
+        self.save_button = tk.Button(button_frame, text="Save as NPZ", command=self.save_poses, font=("Arial", 18))
+        self.save_button.pack(side=tk.LEFT, padx=5)
 
     def _calculate_centered_coords(self, x, y):
         center_x = self.canvas_width / 2
@@ -63,17 +73,63 @@ class Whiteboard:
 
         self.is_drawing = False
 
-        print(self.current_segment) 
+        # Convert all points in current segment to poses and add to all_poses
+        for point in self.current_segment:
+            x, z = point[0], point[1]  # x and z from centered coordinates
+            # Format: (x, 0, z, 0, 0, 0, 1)
+            pose = [x, 0.0, z, 0.0, 0.0, 0.0, 1.0]
+            self.all_poses.append(pose)
+        
+        print(f"Segment completed. Total poses: {len(self.all_poses)}") 
 
     def clear_canvas(self):
         self.canvas.delete("path")
         self.current_segment = []
+        self.all_poses = []
         print("Canvas cleared")
 
-
+    def save_poses(self):
+        """Save all poses in drawing order as npz file"""
+        if len(self.all_poses) == 0:
+            print("No poses to save. Please draw something first.")
+            return
+        
+        # Convert to numpy array: shape (N, 7)
+        poses_array = np.array(self.all_poses, dtype=np.float32)
+        
+        # Default save directory: current directory
+        default_dir = Path.cwd()
+        default_filename = "canvas_poses.npz"
+        default_path = default_dir / default_filename
+        
+        # Ask user for save location, with default path
+        file_path = filedialog.asksaveasfilename(
+            defaultextension=".npz",
+            filetypes=[("NPZ files", "*.npz"), ("All files", "*.*")],
+            title="Save poses as NPZ",
+            initialdir=str(default_dir),
+            initialfile=default_filename
+        )
+        
+        if file_path:
+            # Ensure parent directory exists
+            save_path = Path(file_path)
+            save_path.parent.mkdir(parents=True, exist_ok=True)
+            
+            # Save as npz file
+            np.savez(save_path, poses=poses_array)
+            abs_path = save_path.resolve()
+            print(f"Saved {len(self.all_poses)} poses to: {abs_path}")
+            print(f"Pose array shape: {poses_array.shape}")
 
     def get_paths(self):
         return self.current_segment
+    
+    def get_poses(self):
+        """Get all poses in drawing order as numpy array"""
+        if len(self.all_poses) == 0:
+            return np.array([], dtype=np.float32).reshape(0, 7)
+        return np.array(self.all_poses, dtype=np.float32)
 
 
 if __name__ == '__main__':
