@@ -21,6 +21,7 @@ setup(
     entry_points={
         'console_scripts': [
             'push_the_angles = pose.push_the_angles:main',
+            'point_scaler = pose.point_scaler:main',
             'tester = pose.tester:main',
         ],
     },

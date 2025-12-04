@@ -75,9 +75,8 @@ class Whiteboard:
 
         # Convert all points in current segment to poses and add to all_poses
         for point in self.current_segment:
-            x, z = point[0], point[1]  # x and z from centered coordinates
-            # Format: (x, 0, z, 0, 0, 0, 1)
-            pose = [x, 0.0, z, 0.0, 0.0, 0.0, 1.0]
+            x, z = point[0], point[1]
+            pose = [x, z]
             self.all_poses.append(pose)
         
         print(f"Segment completed. Total poses: {len(self.all_poses)}") 
