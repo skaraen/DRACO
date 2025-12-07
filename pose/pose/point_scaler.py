@@ -10,7 +10,35 @@ from pathlib import Path
 import time, math
 import tkinter as tk
 from tkinter import filedialog
+from geometry_msgs.msg import Twist
+from nav_msgs.msg import Odometry
 
+def deg_to_rad(deg):
+        return deg * math.pi / 180.0
+
+# standard ZYX yaw from quaternion
+def quat_to_yaw(x, y, z, w):
+    siny_cosp = 2.0 * (w * z + x * y)
+    cosy_cosp = 1.0 - 2.0 * (y * y + z * z)
+    return math.atan2(siny_cosp, cosy_cosp)
+
+# wrap to [-pi, pi]
+def wrap_angle(angle):
+    return math.atan2(math.sin(angle), math.cos(angle))
+
+# Convert angle based on forward vector to original reference based on left vector
+def reorient_lidar_angle(angle):
+    # Lidar angle 0 is forward, but we want 0 to be left
+    l_angle = angle - 90
+    if abs(l_angle) > 180:
+        l_angle += 360
+    return l_angle
+
+def distance_at_angle(msg, angle):
+    lidar_angle = reorient_lidar_angle(angle)
+    idx = (deg_to_rad(lidar_angle) - msg.angle_min) // msg.angle_increment
+
+    return msg.ranges[idx]
 
 class PointScaler(Node):
 
@@ -36,6 +64,7 @@ class PointScaler(Node):
         )
 
         # Load angles from file
+        self.canvas_output = canvas_output
         canvas_path = Path(canvas_output)
         if not canvas_path.is_file():
             raise FileNotFoundError(f"Angles file not found: {canvas_output}")
@@ -45,7 +74,48 @@ class PointScaler(Node):
         
         self.canvas_points = []
         self.real_world_points = []
-        self.read_canvas_points(canvas_output)
+
+        #LiDAR reorient
+        self.cmd_pub = self.create_publisher(Twist, '/cmd_vel', 10)
+        self.odom_sub = self.create_subscription(
+            Odometry, '/odom', self.odom_callback, 10
+        )
+        self.current_yaw = None
+
+        self.board_found = False
+        self.point_read = False
+        self.board_distance = -1
+        self.marker_length = 0.01
+
+    def odom_callback(self, msg):
+        q = msg.pose.pose.orientation
+        self.current_yaw = quat_to_yaw(q.x, q.y, q.z, q.w)
+
+    def find_board(self, msg):
+        # Rotate to face min_idx later
+        self.board_found = True
+        self.board_distance = distance_at_angle(msg, 0)
+
+        return
+    
+        # min_dist = float('inf')
+        # min_idx = -1
+
+        # for idx, d in enumerate(msg.ranges):
+        #     if d < msg.range_min or d > msg.range_max or math.isnan(d):
+        #         continue
+            
+        #     if d < min_dist:
+        #         min_dist = d
+        #         min_idx = idx
+    
+    def lidar_callback(self, msg):
+        # Initialize beam indices if not set
+        if not self.board_found:
+            self.find_board(msg)
+        elif not self.points_read:
+            self.point_read
+            self.read_canvas_points(self.canvas_output)
     
     def read_canvas_points(self, canvas_output):
         data = np.load(canvas_output, allow_pickle=False)
@@ -56,19 +126,26 @@ class PointScaler(Node):
         self.compute_real_coords()
     
     def compute_real_coords(self):
-        center_y = 0.0
-        center_z = 0.2
+        cy = 0.0
+        cz = 0.2
+        h = self.board_distance
+        m = self.marker_length
 
-        x = 0.15
+        self.get_logger().info(f"Board origin: {b}, {cy}, {cz}")
 
         real_length = 0.085
         canvas_length = 200
-
-        ratio = real_length / canvas_length
+        scale = real_length / canvas_length
 
         for p in self.canvas_points:
-            y = center_y + (ratio * p[0])
-            z = center_z + (ratio * p[1])
+            z = cz + (scale * p[1])
+            w = cy + (scale * p[0])
+
+            hyp = math.sqrt((w * w) + (h * h))
+            ratio = (hyp - m) / hyp
+
+            x = ratio * h
+            y = ratio * w
 
             theta = math.atan(y / x) / 2
 
