@@ -49,3 +49,9 @@ qtcreator-*
 
 # Catkin custom files
 CATKIN_IGNORE
+
+# ignore all .pt files in the workspace
+**/checkpoint*.pt
+
+# ingore the trace
+trace/

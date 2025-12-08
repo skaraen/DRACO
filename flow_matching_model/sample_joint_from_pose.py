@@ -3,11 +3,22 @@
 Sample joint angles given pose, using a flow-matching model trained by train_fl_pose.py.
 """
 
-import argparse
+import sys
 from pathlib import Path
+import argparse
 
 import numpy as np
 import torch
+
+# Add flow_matching directory to path (contains setup.py)
+FM_ROOT = Path(__file__).resolve().parent.parent / "flow_matching"
+if str(FM_ROOT) not in sys.path:
+    sys.path.insert(0, str(FM_ROOT))
+
+# Add current directory to path for train_fl_pose import
+CURRENT_DIR = Path(__file__).resolve().parent
+if str(CURRENT_DIR) not in sys.path:
+    sys.path.insert(0, str(CURRENT_DIR))
 
 from train_fl_pose import (
     ConditionedVelocityNet,
@@ -24,7 +35,7 @@ def parse_args():
     parser.add_argument(
         "--checkpoint",
         type=str,
-        default="output/model_training/checkpoint_epoch_1000.pt",
+        default="flow_matching_model/checkpoint_epoch_1000.pt",
         help="Path to trained checkpoint (.pt) from train_fl_pose.py",
     )
     parser.add_argument(
@@ -111,10 +122,13 @@ def main():
     if not ckpt_path.is_file():
         raise FileNotFoundError(f"Checkpoint not found: {ckpt_path}")
 
-    ckpt = torch.load(ckpt_path, map_location=device)
+    # Load checkpoint to CPU first to avoid GPU memory issues
+    print("Loading checkpoint from CPU...")
+    ckpt = torch.load(ckpt_path, map_location='cpu')
 
     # Build model; hyperparameters must match training-time values.
     # Here we assume default dims (pose_dim=7, joint_dim=4) as in train_fl_pose.py.
+    print("Building model...")
     model = ConditionedVelocityNet(
         pose_dim=7,
         joint_dim=4,
@@ -123,8 +137,10 @@ def main():
         d_ff=2048,
         num_heads=8,
         dropout=0.1,
-    ).to(device)
+    )
     model.load_state_dict(ckpt["model_state_dict"])
+    # Move model to device after loading state dict
+    model = model.to(device)
     model.eval()
 
     # Build solver with wrapped model

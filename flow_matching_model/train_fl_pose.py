@@ -17,33 +17,24 @@ from torch.utils.data import Dataset, DataLoader
 import numpy as np
 import matplotlib.pyplot as plt
 
-# Add flow_matching to path if needed
-FM_ROOT = Path(__file__).resolve().parent / "flow_matching"
-if FM_ROOT.exists() and str(FM_ROOT) not in sys.path:
+# Add flow_matching directory to path (contains setup.py)
+FM_ROOT = Path(__file__).resolve().parent.parent / "flow_matching"
+if str(FM_ROOT) not in sys.path:
     sys.path.insert(0, str(FM_ROOT))
 
-# Add current directory to path for transformer (in flow_matching folder)
-CURRENT_DIR = Path(__file__).resolve().parent
-if str(CURRENT_DIR) not in sys.path:
-    sys.path.insert(0, str(CURRENT_DIR))
+# Add parent directory (DRACO) to path so we can import transformer
+DRACO_ROOT = Path(__file__).resolve().parent.parent
+if str(DRACO_ROOT) not in sys.path:
+    sys.path.insert(0, str(DRACO_ROOT))
 
-try:
-    from ..flow_matching.path import AffineProbPath
-    from ..flow_matching.path.scheduler import CondOTScheduler
-    from ..flow_matching.solver import ODESolver
-    from ..flow_matching.utils import ModelWrapper as FMModelWrapper
-except ImportError:
-    # If flow_matching is not in path, try to add it
-    FM_ROOT = Path(__file__).resolve().parent / "flow_matching"
-    if FM_ROOT.exists():
-        sys.path.insert(0, str(FM_ROOT))
-    from ..flow_matching.path import AffineProbPath
-    from ..flow_matching.path.scheduler import CondOTScheduler
-    from ..flow_matching.solver import ODESolver
-    from ..flow_matching.utils import ModelWrapper as FMModelWrapper
+# Import from flow_matching package
+from flow_matching.path import AffineProbPath
+from flow_matching.path.scheduler import CondOTScheduler
+from flow_matching.solver import ODESolver
+from flow_matching.utils import ModelWrapper as FMModelWrapper
 
-# Import transformer from local flow_matching folder
-from ..transformer import make_transformer
+# Import transformer
+from transformer import make_transformer
 
 
 class JointToPoseDataset(Dataset):
