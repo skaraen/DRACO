@@ -12,6 +12,7 @@ import tkinter as tk
 from tkinter import filedialog
 from geometry_msgs.msg import Twist
 from nav_msgs.msg import Odometry
+from sensor_msgs.msg import LaserScan
 
 def deg_to_rad(deg):
         return deg * math.pi / 180.0
@@ -36,9 +37,10 @@ def reorient_lidar_angle(angle):
 
 def distance_at_angle(msg, angle):
     lidar_angle = reorient_lidar_angle(angle)
-    idx = (deg_to_rad(lidar_angle) - msg.angle_min) // msg.angle_increment
+    idx_float = (deg_to_rad(lidar_angle) - msg.angle_min) // msg.angle_increment
+    idx_int = int(round(idx_float))
 
-    return msg.ranges[idx]
+    return msg.ranges[idx_int]
 
 class PointScaler(Node):
 
@@ -77,13 +79,14 @@ class PointScaler(Node):
 
         #LiDAR reorient
         self.cmd_pub = self.create_publisher(Twist, '/cmd_vel', 10)
-        self.odom_sub = self.create_subscription(
-            Odometry, '/odom', self.odom_callback, 10
-        )
-        self.current_yaw = None
+        # self.odom_sub = self.create_subscription(
+        #     Odometry, '/odom', self.odom_callback, 10
+        # )
+        # self.current_yaw = None
+        self.lidar_sub = self.create_subscription(LaserScan, f'/tb{ros_domain_id}/scan', self.lidar_callback, 10)
 
         self.board_found = False
-        self.point_read = False
+        self.points_read = False
         self.board_distance = -1
         self.marker_length = 0.01
 
@@ -110,11 +113,12 @@ class PointScaler(Node):
         #         min_idx = idx
     
     def lidar_callback(self, msg):
+        self.get_logger().info("Hello")
         # Initialize beam indices if not set
         if not self.board_found:
             self.find_board(msg)
         elif not self.points_read:
-            self.point_read
+            self.points_read = True
             self.read_canvas_points(self.canvas_output)
     
     def read_canvas_points(self, canvas_output):
@@ -128,10 +132,12 @@ class PointScaler(Node):
     def compute_real_coords(self):
         cy = 0.0
         cz = 0.2
-        h = self.board_distance
-        m = self.marker_length
+        # h = self.board_distance
+        h = 0.15
+        # m = self.marker_length
+        m = 0.0
 
-        self.get_logger().info(f"Board origin: {b}, {cy}, {cz}")
+        self.get_logger().info(f"Board origin: {h}, {cy}, {cz}")
 
         real_length = 0.085
         canvas_length = 200
@@ -149,6 +155,7 @@ class PointScaler(Node):
 
             theta = math.atan(y / x) / 2
 
+            self.get_logger().info(f"x: {x}, y: {y}, z: {z}")
             self.real_world_points.append([x, y, z, 0.0, 0.0, math.sin(theta), math.cos(theta)])
 
         self.write_points()
