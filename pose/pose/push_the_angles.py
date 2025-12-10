@@ -55,10 +55,50 @@ class AnglePublisher(Node):
         
         # Current index for publishing
         self.current_index = 0
+
+        self.init_angles()
+        time.sleep(5)
         
         # Create timer to publish angles sequentially
         # Publish at 10 Hz (every 0.1 seconds)
         self.timer = self.create_timer(0.1, self.publish_next_angle)
+
+    def init_angles(self):
+        angle_set = self.angles[self.current_index]
+            
+        arm_msg = ArmJointAngles()
+        arm_msg.joint1 = float(0.041)
+        arm_msg.joint2 = float(-1.494)
+        arm_msg.joint3 = float(0.508)
+        arm_msg.joint4 = float(1.033)
+        
+        self.angles_pub.publish(arm_msg)
+        self.get_logger().info(
+            f'Published init angle set : '
+            f'[{arm_msg.joint1:.4f}, {arm_msg.joint2:.4f}, {arm_msg.joint3:.4f}, {arm_msg.joint4:.4f}]'
+        )
+        
+        self.current_index += 1
+        if self.current_index < self.angles.shape[0]:
+            angle_set = self.angles[self.current_index]
+            
+            arm_msg = ArmJointAngles()
+            arm_msg.joint1 = float(angle_set[0])
+            arm_msg.joint2 = float(angle_set[1])
+            arm_msg.joint3 = float(angle_set[2])
+            arm_msg.joint4 = float(angle_set[3])
+            
+            self.angles_pub.publish(arm_msg)
+            self.get_logger().info(
+                f'Published angle set {self.current_index + 1}/{self.angles.shape[0]}: '
+                f'[{arm_msg.joint1:.4f}, {arm_msg.joint2:.4f}, {arm_msg.joint3:.4f}, {arm_msg.joint4:.4f}]'
+            )
+            
+            self.current_index += 1
+        else:
+            # All angles published, stop the timer
+            self.get_logger().info('Finished publishing all joint angles')
+            self.timer.cancel()
 
     def publish_next_angle(self):
         """Publish the next set of joint angles."""

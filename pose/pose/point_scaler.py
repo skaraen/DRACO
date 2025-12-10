@@ -88,7 +88,7 @@ class PointScaler(Node):
         self.board_found = False
         self.points_read = False
         self.board_distance = -1
-        self.marker_length = 0.01
+        self.marker_length = 0.055 
 
     def odom_callback(self, msg):
         q = msg.pose.pose.orientation
@@ -131,21 +131,20 @@ class PointScaler(Node):
     
     def compute_real_coords(self):
         cy = 0.0
-        cz = 0.2
-        # h = self.board_distance
-        h = 0.15
-        # m = self.marker_length
-        m = 0.0
+        cz = 0.15
+        h = 0.17
+        m = self.marker_length
+        # m = 0
 
         self.get_logger().info(f"Board origin: {h}, {cy}, {cz}")
 
-        real_length = 0.085
+        real_length = 0.06
         canvas_length = 200
         scale = real_length / canvas_length
 
         for p in self.canvas_points:
             z = cz + (scale * p[1])
-            w = cy + (scale * p[0])
+            w = -1 * (cy + (scale * p[0]))
 
             hyp = math.sqrt((w * w) + (h * h))
             ratio = (hyp - m) / hyp
@@ -155,7 +154,6 @@ class PointScaler(Node):
 
             theta = math.atan(y / x) / 2
 
-            self.get_logger().info(f"x: {x}, y: {y}, z: {z}")
             self.real_world_points.append([x, y, z, 0.0, 0.0, math.sin(theta), math.cos(theta)])
 
         self.write_points()
