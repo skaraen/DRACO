@@ -13,6 +13,7 @@ from tkinter import filedialog
 from geometry_msgs.msg import Twist
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import LaserScan
+from pathlib import Path
 
 def deg_to_rad(deg):
         return deg * math.pi / 180.0
@@ -44,7 +45,7 @@ def distance_at_angle(msg, angle):
 
 class PointScaler(Node):
 
-    def __init__(self, canvas_output):
+    def __init__(self, trace):
         super().__init__('point_scaler')
 
         # Get the ROS_DOMAIN_ID aka robot number
@@ -66,16 +67,16 @@ class PointScaler(Node):
         )
 
         # Load angles from file
-        self.canvas_output = canvas_output
-        canvas_path = Path(canvas_output)
-        if not canvas_path.is_file():
-            raise FileNotFoundError(f"Angles file not found: {canvas_output}")
+        self.trace_dir = Path("src/DRACO/traces") / trace
+        if not self.trace_dir.is_dir():
+            raise FileNotFoundError(f"Trace directory not found: {self.trace_dir}")
     
         # Current index for publishing
         self.current_index = 0
         
         self.canvas_points = []
         self.real_world_points = []
+        self.curr_file_name = ""
 
         #LiDAR reorient
         self.cmd_pub = self.create_publisher(Twist, '/cmd_vel', 10)
@@ -119,15 +120,26 @@ class PointScaler(Node):
             self.find_board(msg)
         elif not self.points_read:
             self.points_read = True
-            self.read_canvas_points(self.canvas_output)
+            self.read_canvas_points()
+            rclpy.shutdown()
     
-    def read_canvas_points(self, canvas_output):
-        data = np.load(canvas_output, allow_pickle=False)
+    def read_canvas_points(self):
+        for file in sorted(self.trace_dir.glob("*.npz")):
+            self.get_logger().info(f"Loading trace: {file}")
 
-        self.canvas_points = data["poses"]
-        self.get_logger().info(f"Pose array shape: {self.canvas_points.shape}")
+            data = np.load(file, allow_pickle=False)
 
-        self.compute_real_coords()
+            if "poses" not in data:
+                self.get_logger().warning(f"Skipping {file}: 'poses' key not found")
+                continue
+            
+            self.curr_file_name = file.name
+            self.canvas_points = data["poses"]
+            self.get_logger().info(
+                f"{file.name} pose array shape: {self.canvas_points.shape}"
+            )
+
+            self.compute_real_coords()
     
     # def compute_real_coords(self):
     #     cy = 0.0
@@ -205,9 +217,6 @@ class PointScaler(Node):
 
         self.write_points()
 
-
-
-
     def write_points(self):
         """Save all poses in drawing order as npz file"""
         if len(self.real_world_points) == 0:
@@ -218,29 +227,15 @@ class PointScaler(Node):
         poses_array = np.array(self.real_world_points, dtype=np.float32)
         
         # Default save directory: current directory
-        default_dir = Path.cwd()
-        default_filename = "real_poses.npz"
-        default_path = default_dir / default_filename
+        cfile = Path(self.curr_file_name) 
+        rposes_file_name = cfile.stem.replace("_cposes", "_rposes") + cfile.suffix
+        rposes_path = self.trace_dir / rposes_file_name
         
-        # Ask user for save location, with default path
-        file_path = filedialog.asksaveasfilename(
-            defaultextension=".npz",
-            filetypes=[("NPZ files", "*.npz"), ("All files", "*.*")],
-            title="Save poses as NPZ",
-            initialdir=str(default_dir),
-            initialfile=default_filename
-        )
-        
-        if file_path:
-            # Ensure parent directory exists
-            save_path = Path(file_path)
-            save_path.parent.mkdir(parents=True, exist_ok=True)
-            
-            # Save as npz file
-            np.savez(save_path, poses=poses_array)
-            abs_path = save_path.resolve()
-            print(f"Saved {len(self.real_world_points)} poses to: {abs_path}")
-            print(f"Pose array shape: {poses_array.shape}")
+        np.savez(rposes_path, poses=poses_array)
+
+        abs_path = rposes_path.resolve()
+        self.get_logger().info(f"Saved {len(self.real_world_points)} poses to: {abs_path}")
+        self.get_logger().info(f"Pose array shape: {poses_array.shape}")
         
 
 def main(args=None):
@@ -248,10 +243,10 @@ def main(args=None):
         description="Scale canvas points to real world coordinates"
     )
     parser.add_argument(
-        '--canvas_output',
+        '--trace',
         type=str,
         required=True,
-        help='Path to .npz file containing canvas points (shape: (N, 2))'
+        help='Trace directory of .npz files canvas poses (shape: (N, 2))'
     )
     
     # Parse known args to avoid conflicts with rclpy
@@ -260,7 +255,7 @@ def main(args=None):
     rclpy.init(args=args)
     
     try:
-        point_scaler = PointScaler(parsed_args.canvas_output)
+        point_scaler = PointScaler(parsed_args.trace)
         
         time.sleep(2)  # Wait for publisher to set up
         rclpy.spin(point_scaler)
