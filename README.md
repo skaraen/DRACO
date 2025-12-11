@@ -4,18 +4,18 @@ Diffusion-based Robot Arm Controller
 
 ## Demo Videos
 
-[drawing hello](video/hello_draw.mov)
+[drawing hello](videos/hello_draw.mov)
 
-[hello](video/hello.mov)
+[hello](videos/hello.mov)
 
-[drawing a smiley face](video/smiley_draw.mov)
+[drawing a smiley face](videos/smiley_draw.mov)
 
-[smiley face](video/smiley.mov)
+[smiley face](videos/smiley.mov)
 
-[drawing a car](video/car_draw.mov)
+[drawing a car](videos/car_draw.mov)
 
-[car](video/car.mov)
+[car](videos/car.mov)
 
-[drawing a scenery](video/scenery_draw.mov)
+[drawing a scenery](videos/scenery_draw.mov)
 
-[scenery](video/scenery.mov)
+[scenery](videos/scenery.mov)
