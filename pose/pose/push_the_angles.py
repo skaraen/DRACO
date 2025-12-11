@@ -16,7 +16,7 @@ import time
 
 class AnglePublisher(Node):
 
-    def __init__(self, angles_file):
+    def __init__(self, trace):
         super().__init__('angle_publisher')
 
         # Get the ROS_DOMAIN_ID aka robot number
@@ -37,13 +37,24 @@ class AnglePublisher(Node):
             10
         )
 
-        # Load angles from file
-        angles_path = Path(angles_file)
-        if not angles_path.is_file():
-            raise FileNotFoundError(f"Angles file not found: {angles_path}")
-        
-        self.angles = np.load(angles_path)
-        
+        # get the trace directory path
+        self.trace_dir = Path("src/DRACO/traces") / trace
+        if not self.trace_dir.is_dir():
+            raise FileNotFoundError(f"Trace directory not found: {self.trace_dir}")
+        # then we need to get all the joints.npy files in the trace directory
+        self.joints_files = list(self.trace_dir.glob("*joints.npy"))
+        if not self.joints_files:
+            raise FileNotFoundError(f"No joints.npy files found in trace directory: {self.trace_dir}")
+        # then we need to iterate through all the joints.npy files and load the angles into a list
+        # we need to let the arm move to home pose before each angle set
+        self.angles = []
+        for joints_file in self.joints_files:
+            # load the original data
+            self.angles.append(np.load(joints_file))
+            # load the home pose for ten times
+            for i in range(10):
+                home_pose = [0, -1.494, 0.508, 1.033]
+                self.angles.append(home_pose)
         # Handle different shapes: (4,) -> (1, 4), (N, 4) stays as is
         if self.angles.ndim == 1:
             self.angles = self.angles.reshape(1, -1)
@@ -51,7 +62,7 @@ class AnglePublisher(Node):
         if self.angles.shape[1] != 4:
             raise ValueError(f"Expected 4 joint angles per row, got shape {self.angles.shape}")
         
-        self.get_logger().info(f'Loaded {self.angles.shape[0]} sets of joint angles from {angles_path}')
+        self.get_logger().info(f'Loaded {self.angles.shape[0]} sets of joint angles from {self.trace_dir}')
         
         # Current index for publishing
         self.current_index = 0
@@ -117,12 +128,12 @@ class AnglePublisher(Node):
             self.current_index += 1
         else:
             # All angles published, stop the timer
-            for i in range(10):
-                joints_msg = ArmJointAngles()
-                joints_msg.joint1 = float(0)
-                joints_msg.joint2 = float(-1.494)
-                joints_msg.joint3 = float(0.508)
-                joints_msg.joint4 = float(1.033)
+            # for i in range(10):
+            #     joints_msg = ArmJointAngles()
+            #     joints_msg.joint1 = float(0)
+            #     joints_msg.joint2 = float(-1.494)
+            #     joints_msg.joint3 = float(0.508)
+            #     joints_msg.joint4 = float(1.033)
             self.get_logger().info('Finished publishing all joint angles and reset the arm')
             self.timer.cancel()
 
@@ -132,10 +143,10 @@ def main(args=None):
         description="Publish joint angles from .npy file to ROS2 topic"
     )
     parser.add_argument(
-        '--angles_file',
+        '--trace',
         type=str,
         required=True,
-        help='Path to .npy file containing joint angles (shape: (N, 4) or (4,))'
+        help='Path to folder containing all .npz files'
     )
     parser.add_argument(
         '--rate',
