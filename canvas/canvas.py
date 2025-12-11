@@ -11,6 +11,7 @@ class Whiteboard:
         self.is_drawing = False
         self.current_segment = []
         self.all_poses = []  # Store all poses in drawing order
+        self.index = 1
 
         self.canvas_height = 400
         self.canvas_width = 400
@@ -73,62 +74,56 @@ class Whiteboard:
 
         self.is_drawing = False
 
-        # Convert all points in current segment to poses and add to all_poses
-        for point in self.current_segment:
-            x, z = point[0], point[1]
-            pose = [x, z]
-            self.all_poses.append(pose)
-        
-        print(f"Segment completed. Total poses: {len(self.all_poses)}") 
+        if not self.current_segment:
+            print("Segment completed but no points recorded.")
+            return
+
+        self.all_poses.append(list(self.current_segment))
+        print(f"Segment completed. Total segments: {len(self.all_poses)}")
+
 
     def clear_canvas(self):
         self.canvas.delete("path")
         self.current_segment = []
         self.all_poses = []
+        self.index = 1
         print("Canvas cleared")
 
     def save_poses(self):
-        """Save all poses in drawing order as npz file"""
         if len(self.all_poses) == 0:
             print("No poses to save. Please draw something first.")
             return
-        
-        # Convert to numpy array: shape (N, 7)
-        poses_array = np.array(self.all_poses, dtype=np.float32)
-        
-        # Default save directory: current directory
-        default_dir = Path.cwd()
-        default_filename = "canvas_poses.npz"
-        default_path = default_dir / default_filename
-        
-        # Ask user for save location, with default path
-        file_path = filedialog.asksaveasfilename(
-            defaultextension=".npz",
-            filetypes=[("NPZ files", "*.npz"), ("All files", "*.*")],
-            title="Save poses as NPZ",
-            initialdir=str(default_dir),
-            initialfile=default_filename
-        )
-        
-        if file_path:
-            # Ensure parent directory exists
-            save_path = Path(file_path)
-            save_path.parent.mkdir(parents=True, exist_ok=True)
-            
-            # Save as npz file
+
+        trace_name = input("Enter trace name: ").strip()
+        if not trace_name:
+            print("Save canceled. Empty name.")
+            return
+
+        script_dir = Path(__file__).resolve().parent
+        base_dir = script_dir.parent / "traces" 
+        save_dir = base_dir / trace_name
+        save_dir.mkdir(parents=True, exist_ok=True)
+
+        for i, segment in enumerate(self.all_poses, start=1):
+            poses_array = np.array(segment, dtype=np.float32)
+            filename = f"{i:03d}_cposes.npz"
+            save_path = save_dir / filename
+
             np.savez(save_path, poses=poses_array)
-            abs_path = save_path.resolve()
-            print(f"Saved {len(self.all_poses)} poses to: {abs_path}")
-            print(f"Pose array shape: {poses_array.shape}")
+            print(f"Saved stroke {i} with {poses_array.shape[0]} poses to: {save_path}")
+
+        print(f"Finished saving {len(self.all_poses)} strokes to {save_dir}")
+        self.clear_canvas()
+
 
     def get_paths(self):
         return self.current_segment
     
     def get_poses(self):
-        """Get all poses in drawing order as numpy array"""
         if len(self.all_poses) == 0:
-            return np.array([], dtype=np.float32).reshape(0, 7)
-        return np.array(self.all_poses, dtype=np.float32)
+            return []
+        return [np.array(segment, dtype=np.float32) for segment in self.all_poses]
+
 
 
 if __name__ == '__main__':
