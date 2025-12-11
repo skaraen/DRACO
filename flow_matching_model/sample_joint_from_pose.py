@@ -14,11 +14,13 @@ import torch
 FM_ROOT = Path(__file__).resolve().parent.parent / "flow_matching"
 if str(FM_ROOT) not in sys.path:
     sys.path.insert(0, str(FM_ROOT))
-
+print(FM_ROOT)
 # Add current directory to path for train_fl_pose import
 CURRENT_DIR = Path(__file__).resolve().parent
 if str(CURRENT_DIR) not in sys.path:
     sys.path.insert(0, str(CURRENT_DIR))
+
+print(CURRENT_DIR)
 
 from train_fl_pose import (
     ConditionedVelocityNet,
@@ -35,7 +37,7 @@ def parse_args():
     parser.add_argument(
         "--checkpoint",
         type=str,
-        default="flow_matching_model/checkpoint_epoch_1000.pt",
+        default="src/DRACO/flow_matching_model/checkpoint_epoch_1000.pt",
         help="Path to trained checkpoint (.pt) from train_fl_pose.py",
     )
     parser.add_argument(

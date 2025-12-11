@@ -171,6 +171,7 @@ class PointScaler(Node):
     #     self.write_points()
 
     def compute_real_coords(self):
+        self.real_world_points = []
         cy = 0.0
         cz = 0.15
 
