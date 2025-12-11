@@ -113,6 +113,13 @@ class Whiteboard:
             print(f"Saved stroke {i} with {poses_array.shape[0]} poses to: {save_path}")
 
         print(f"Finished saving {len(self.all_poses)} strokes to {save_dir}")
+        
+        # Save trace name to file for pipeline.sh to read
+        trace_file = base_dir / ".last_trace"
+        with open(trace_file, 'w') as f:
+            f.write(trace_name)
+        print(f"Trace name '{trace_name}' saved to {trace_file}")
+        
         self.clear_canvas()
 
 
