@@ -89,7 +89,7 @@ class PointScaler(Node):
         self.board_found = False
         self.points_read = False
         self.board_distance = -1
-        self.marker_length = 0.065 
+        self.marker_length = 0.06 
 
     def odom_callback(self, msg):
         q = msg.pose.pose.orientation
