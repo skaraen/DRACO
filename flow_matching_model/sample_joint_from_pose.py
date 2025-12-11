@@ -68,6 +68,12 @@ def parse_args():
         default=None,
         help="Optional path to save sampled joint angles as .npy",
     )
+    parser.add_argument(
+        "--trace",
+        type=str,
+        default=None,
+        help="Name of trace directory under src/DRACO/traces (--trace smile)",
+    )
     return parser.parse_args()
 
 
@@ -219,6 +225,24 @@ def main():
         raise KeyError("Checkpoint does not contain 'joint_min'/'joint_max' statistics")
     joint_min = ckpt["joint_min"].to(device).view(1, -1)
     joint_max = ckpt["joint_max"].to(device).view(1, -1)
+
+    if args.trace is not None:
+        pose_dir = Path("src/DRACO/traces") / args.trace
+        if not pose_dir.is_dir():
+            raise FileNotFoundError(f"Trace directory not found: {pose_dir}")
+
+        print(f"--trace given, processing all *_rposes.npz in trace directory: {pose_dir}")
+        process_pose_directory(
+            pose_dir=pose_dir,
+            args=args,
+            device=device,
+            model=model,
+            solver=solver,
+            joint_min=joint_min,
+            joint_max=joint_max,
+        )
+        return
+
 
     if args.pose_npy is not None:
         pose_path = Path(args.pose_npy)
