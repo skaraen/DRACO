@@ -47,23 +47,60 @@ class AnglePublisher(Node):
             raise FileNotFoundError(f"No joints.npy files found in trace directory: {self.trace_dir}")
         # then we need to iterate through all the joints.npy files and load the angles into a list
         # we need to let the arm move to home pose before each angle set
-        self.angles = []
-        for joints_file in self.joints_files:
-            # load the original data
-            self.angles.append(np.load(joints_file))
-            # load the home pose for ten times
-            for i in range(10):
-                home_pose = [0, -1.494, 0.508, 1.033]
-                self.angles.append(home_pose)
-        # Handle different shapes: (4,) -> (1, 4), (N, 4) stays as is
-        if self.angles.ndim == 1:
-            self.angles = self.angles.reshape(1, -1)
+        # breakpoint()
+        # self.angles = None
+        # for joints_file in self.joints_files:
+        #     # load the original data
+        #     if self.angles is None:
+        #         self.angles = np.load(joints_file)
+        #     np.concatenate([self.angles, np.load(joints_file)])
+        #     # load the home pose for ten times
+        #     for i in range(10):
+        #         home_pose = np.array([0, -1.494, 0.508, 1.033]).reshape(1, -1)
+        #         np.concatenate([self.angles, home_pose])
+        # # Handle different shapes: (4,) -> (1, 4), (N, 4) stays as is
+        # if self.angles.ndim == 1:
+        #     self.angles = self.angles.reshape(1, -1)
         
+        # print(self.angles.shape)
+        # if self.angles.shape[1] != 4:
+        #     raise ValueError(f"Expected 4 joint angles per row, got shape {self.angles.shape}")
+        
+        # self.get_logger().info(f'Loaded {self.angles.shape[0]} sets of joint angles from {self.trace_dir}')
+        
+        # then we need to iterate through all the joints.npy files and build a big angle array
+        # we need to let the arm move to home pose before each angle set
+
+        home_pose = np.array([[0, -1.494, 0.508, 1.033]], dtype=np.float32)  # shape (1, 4)
+        angle_blocks = []
+
+        for joints_file in sorted(self.joints_files):
+            # load the joint angles from this file
+            joints = np.load(joints_file)  # .npy -> ndarray
+
+            # Handle shapes: (4,) -> (1, 4); (N, 4) stays as-is
+            joints = np.atleast_2d(joints)
+
+            # 10 steps of home pose before this segment
+            home_block = np.repeat(home_pose, 10, axis=0)
+
+            angle_blocks.append(home_block)
+            angle_blocks.append(joints)
+        
+        # move to home pose at the end
+        home_block = np.repeat(home_pose, 10, axis=0)
+        angle_blocks.append(home_block)
+
+        # Concatenate everything into one (T, 4) array
+        self.angles = np.concatenate(angle_blocks, axis=0)
+
         if self.angles.shape[1] != 4:
             raise ValueError(f"Expected 4 joint angles per row, got shape {self.angles.shape}")
-        
-        self.get_logger().info(f'Loaded {self.angles.shape[0]} sets of joint angles from {self.trace_dir}')
-        
+
+        self.get_logger().info(
+            f'Loaded {self.angles.shape[0]} sets of joint angles from {self.trace_dir}'
+        )
+
         # Current index for publishing
         self.current_index = 0
         
@@ -110,14 +147,17 @@ class AnglePublisher(Node):
 
     def publish_next_angle(self):
         """Publish the next set of joint angles."""
+        # self.get_logger().info(self.angles.shape[0])
         if self.current_index < self.angles.shape[0]:
             angle_set = self.angles[self.current_index]
+            # self.get_logger().info(angle_set)
             
             arm_msg = ArmJointAngles()
             arm_msg.joint1 = float(angle_set[0])
             arm_msg.joint2 = float(angle_set[1])
             arm_msg.joint3 = float(angle_set[2])
             arm_msg.joint4 = float(angle_set[3])
+            # self.get_logger().info(arm_msg)
             
             self.angles_pub.publish(arm_msg)
             self.get_logger().info(
@@ -161,7 +201,7 @@ def main(args=None):
     rclpy.init(args=args)
     
     try:
-        angle_publisher = AnglePublisher(parsed_args.angles_file)
+        angle_publisher = AnglePublisher(parsed_args.trace)
         
         # Adjust timer rate if specified
         if parsed_args.rate != 10.0:
