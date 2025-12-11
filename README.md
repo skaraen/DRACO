@@ -258,3 +258,18 @@ For each batch:
 
 
 
+## Challenges
+
+The biggest challenge was calibration. If the robot thought the board was even a few millimeters closer or further than it actually was, the marker would either not write at all or get crushed against the wall. We had to carefully tune the marker length offset in point_scaler.py and rely on the LiDAR data to get this right. Another challenge was that the Flow Matching model takes time to run because it has to solve an ODE for every single point, so we could not do this in real time.
+
+## Future Work
+In the future, we would like to to use the camera in the system. The robot would back up and see what it has drawn and correct its own mistakes if the line is too faint or in the wrong place. We also want to speed up the model inference. If we can make the Flow Matching faster, we could let the user draw and have the robot copy them instantly, rather than waiting for the files to process. Currently, we limit the drawing area to keep the model stable. We would want to retrain the Flow Matching model on a larger dataset that covers the full reach of the robot arm. This would let us to increase the size of the projected canvas and create much larger detailed drawings.
+
+## Takeaways
+- Generative Control: Flow Matching works. It finds smooth, natural robot poses that standard math formulas often miss.
+
+- Physical Precision: We learned that tiny physical errors, like the marker being 1mm too short or slightly tilted, can completely ruin a drawing or cause the robot to fully miss the board and not draw at all.
+
+- Speed Trade-off: Flow Matching creates smoother motion, but it is slow. Because it has to solve a complex equation for every single point in the drawing, it takes much longer to calculate than standard formulas.
+
+
