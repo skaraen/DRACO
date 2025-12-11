@@ -55,9 +55,6 @@ class AnglePublisher(Node):
         
         # Current index for publishing
         self.current_index = 0
-
-        self.init_angles()
-        time.sleep(5)
         
         # Create timer to publish angles sequentially
         # Publish at 10 Hz (every 0.1 seconds)

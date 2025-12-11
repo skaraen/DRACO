@@ -88,7 +88,7 @@ class PointScaler(Node):
         self.board_found = False
         self.points_read = False
         self.board_distance = -1
-        self.marker_length = 0.055 
+        self.marker_length = 0.065 
 
     def odom_callback(self, msg):
         q = msg.pose.pose.orientation
@@ -129,34 +129,84 @@ class PointScaler(Node):
 
         self.compute_real_coords()
     
+    # def compute_real_coords(self):
+    #     cy = 0.0
+    #     cz = 0.15
+    #     h = 0.17
+    #     m = self.marker_length
+    #     # m = 0
+
+    #     self.get_logger().info(f"Board origin: {h}, {cy}, {cz}")
+
+    #     real_length = 0.06
+    #     canvas_length = 200
+    #     scale = real_length / canvas_length
+
+    #     for p in self.canvas_points:
+    #         z = cz + (scale * p[1])
+    #         w = -1 * (cy + (scale * p[0]))
+
+    #         hyp = math.sqrt((w * w) + (h * h))
+    #         ratio = (hyp - m) / hyp
+
+    #         x = ratio * h
+    #         y = ratio * w
+
+    #         theta = math.atan(y / x) / 2
+
+    #         self.real_world_points.append([x, y, z, 0.0, 0.0, math.sin(theta), math.cos(theta)])
+
+    #     self.write_points()
+
     def compute_real_coords(self):
         cy = 0.0
         cz = 0.15
-        h = 0.17
-        m = self.marker_length
-        # m = 0
+
+        M = self.marker_length
+        h = 0.17  # forward (x)
 
         self.get_logger().info(f"Board origin: {h}, {cy}, {cz}")
+        self.get_logger().info(f"Real board dist: {self.board_distance}, ({self.board_distance - h})")
 
-        real_length = 0.06
+        real_length = 0.07
         canvas_length = 200
         scale = real_length / canvas_length
 
         for p in self.canvas_points:
-            z = cz + (scale * p[1])
-            w = -1 * (cy + (scale * p[0]))
+            # Point on board in world frame:
+            v = cz + (scale * p[1])          # z (up)
+            w = -1 * (cy + (scale * p[0]))   # y (left)
 
-            hyp = math.sqrt((w * w) + (h * h))
-            ratio = (hyp - m) / hyp
+            # Direction from base B = (0, cy, cz) to board point P = (h, w, v)
+            dx = h
+            dy = w - cy
+            dz = v - cz
 
-            x = ratio * h
-            y = ratio * w
+            L = math.sqrt(dx*dx + dy*dy + dz*dz)
+            if L < 1e-8:
+                # Degenerate, skip or handle separately
+                continue
 
-            theta = math.atan(y / x) / 2
+            # Offset along line from B toward P by M
+            offset_ratio = (L - M) / L
 
-            self.real_world_points.append([x, y, z, 0.0, 0.0, math.sin(theta), math.cos(theta)])
+            # New point P' = B + offset_ratio * d
+            x = offset_ratio * dx          # B.x = 0
+            y = cy + offset_ratio * dy
+            z = cz + offset_ratio * dz
+
+            # Rotation: +x points along d = (dx, dy, dz)
+            qx = 0.0
+            qy = -dz / math.sqrt(2.0 * L * (L + dx))
+            qz =  dy / math.sqrt(2.0 * L * (L + dx))
+            qw = math.sqrt((L + dx) / (2.0 * L))
+
+            self.real_world_points.append([x, y, z, qx, qy, qz, qw])
 
         self.write_points()
+
+
+
 
     def write_points(self):
         """Save all poses in drawing order as npz file"""

@@ -22,6 +22,7 @@ setup(
         'console_scripts': [
             'push_the_angles = pose.push_the_angles:main',
             'point_scaler = pose.point_scaler:main',
+            'reset_arm = pose.reset_arm:main',
             'tester = pose.tester:main',
         ],
     },
