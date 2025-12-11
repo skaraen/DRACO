@@ -1,5 +1,13 @@
 # DRACO
-Diffusion-based Robot Arm Controller
+Flow matching-based Robot Arm Controller
+
+## Project description
+
+DRACO connects digital sketching to physical robotics. The system allows a user to draw on a computer screen, and a robot with 4 joints copies the drawing onto a whiteboard using a marker.
+
+The project is unique because it replaces traditional Inverse Kinematics (IK) with Flow Matching. Instead of using standard formulas to calculate angles, we use this machine learning technique to generate the robot's motion. The system converts 2D screen pixels into real-world targets and uses the model to guide the arm. 
+
+<img width="664" height="368" alt="Screenshot 2025-12-11 at 4 12 27 PM" src="https://github.com/user-attachments/assets/df57845a-6336-498b-9800-8d0130b2dac2" />
 
 
 ## Demo Videos
