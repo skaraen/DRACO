@@ -278,11 +278,11 @@ In the future, we would like to to use the camera in the system. The robot would
 
 ## References
 
-[1] Rosa Wolf, Yitian Shi, Sheng Liu, and Rania Rayyes. Diffusion models for robotic manipulation: a survey. Frontiers in Robotics and AI, Volume 12 - 2025, 2025.
-[2] Cheng Chi, Zhenjia Xu, Siyuan Feng, Eric Cousineau, Yilun Du, Benjamin Burchfiel, Russ Tedrake, and Shuran Song. Diffusion policy: Visuomotor policy learning via action diffusion, 2024.
-[3] Joao Carvalho, An T. Le, Mark Baierl, Dorothea Koert, and Jan Peters. Motion planning diffusion: Learning and planning of robot motions with diffusion models, 2024.
-[4] Youdong Chen, Ling Li, and Xudong Ji. Smooth and accurate trajectory planning for industrial robots. Advances in Mechanical Engineering, 6:342137, 2014.
-[5] Jiang Hua, Liangcai Zeng, Gongfa Li, and Zhaojie Ju. Learning for a robot: Deep
+1. Rosa Wolf, Yitian Shi, Sheng Liu, and Rania Rayyes. Diffusion models for robotic manipulation: a survey. Frontiers in Robotics and AI, Volume 12 - 2025, 2025.
+2. Cheng Chi, Zhenjia Xu, Siyuan Feng, Eric Cousineau, Yilun Du, Benjamin Burchfiel, Russ Tedrake, and Shuran Song. Diffusion policy: Visuomotor policy learning via action diffusion, 2024.
+3. Joao Carvalho, An T. Le, Mark Baierl, Dorothea Koert, and Jan Peters. Motion planning diffusion: Learning and planning of robot motions with diffusion models, 2024.
+4.  Youdong Chen, Ling Li, and Xudong Ji. Smooth and accurate trajectory planning for industrial robots. Advances in Mechanical Engineering, 6:342137, 2014.
+5. Jiang Hua, Liangcai Zeng, Gongfa Li, and Zhaojie Ju. Learning for a robot: Deep
 reinforcement learning, imitation learning, transfer learning. Sensors, 21(4), 2021.
 
 
