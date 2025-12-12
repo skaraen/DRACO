@@ -284,18 +284,19 @@ In the future, we would like to to use the camera in the system. The robot would
 
 ## References
 
-1. Lipman, Yaron, et al. “Flow Matching for Generative Modeling.” *Advances in Neural Information Processing Systems*, 2023.
+1. Lipman, Yaron, et al. “Flow Matching for Generative Modeling.” *Advances in Neural Information Processing Systems*, 2023. arXiv:2210.02747. https://arxiv.org/abs/2210.02747.
 
-2. Liu, Xingyuan, et al. “Flow Policy: Momentum-Driven Decision Making with Rectified Flows.” *Proceedings of the 41st International Conference on Machine Learning*, 2024.
+2. Liu, Xingyuan, et al. “Flow Policy: Momentum-Driven Decision Making with Rectified Flows.” *Proceedings of the 41st International Conference on Machine Learning*, 2024. arXiv:2402.01125. https://arxiv.org/abs/2402.01125.
 
-3. Siciliano, Bruno, et al. *Robotics: Modelling, Planning and Control*. Springer, 2009.
+3. Siciliano, Bruno, et al. *Robotics: Modelling, Planning and Control*. Springer, 2009. https://doi.org/10.1007/978-1-84628-642-1.
 
-4. Levine, Sergey, et al. “End-to-End Training of Deep Visuomotor Policies.” *Journal of Machine Learning Research*, vol. 17, no. 39, 2016, pp. 1–40.
+4. Levine, Sergey, et al. “End-to-End Training of Deep Visuomotor Policies.” *Journal of Machine Learning Research*, vol. 17, no. 39, 2016, pp. 1–40. http://jmlr.org/papers/v17/15-522.html.
 
-5. Janner, Michael, et al. “Diffuser: Diffusion Models for Sequential Decision Making.” *Proceedings of the 39th International Conference on Machine Learning*, 2022.
+5. Janner, Michael, et al. “Diffuser: Diffusion Models for Sequential Decision Making.” *Proceedings of the 39th International Conference on Machine Learning*, 2022. arXiv:2205.09991. https://arxiv.org/abs/2205.09991.
 
-6. Chi, Cheng, et al. “Diffusion Motion Planning.” *Robotics: Science and Systems (RSS)*, 2023.
+6. Chi, Cheng, et al. “Diffusion Motion Planning.” *Robotics: Science and Systems*, 2023. arXiv:2309.15940. https://arxiv.org/abs/2309.15940.
 
-7. Kingma, Diederik P., et al. “Variational Diffusion Models.” *Advances in Neural Information Processing Systems*, 2021.
+7. Kingma, Diederik P., et al. “Variational Diffusion Models.” *Advances in Neural Information Processing Systems*, 2021. arXiv:2107.00630. https://arxiv.org/abs/2107.00630.
+
 
 
