@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import rclpy
 from rclpy.node import Node
 from omx_cpp_interface.msg import ArmJointAngles
@@ -16,39 +14,31 @@ from sensor_msgs.msg import LaserScan
 from pathlib import Path
 
 def deg_to_rad(deg):
-        return deg * math.pi / 180.0
-
-# standard ZYX yaw from quaternion
-def quat_to_yaw(x, y, z, w):
-    siny_cosp = 2.0 * (w * z + x * y)
-    cosy_cosp = 1.0 - 2.0 * (y * y + z * z)
-    return math.atan2(siny_cosp, cosy_cosp)
-
-# wrap to [-pi, pi]
-def wrap_angle(angle):
-    return math.atan2(math.sin(angle), math.cos(angle))
+    """Convert degrees to radians."""
+    return deg * math.pi / 180.0
 
 # Convert angle based on forward vector to original reference based on left vector
 def reorient_lidar_angle(angle):
-    # Lidar angle 0 is forward, but we want 0 to be left
+    """Convert LiDAR angle reference from forward-facing (0 deg) to left-facing (0 deg)."""
     l_angle = angle - 90
     if abs(l_angle) > 180:
         l_angle += 360
     return l_angle
 
 def distance_at_angle(msg, angle):
+    """Get LiDAR distance reading at a specific angle."""
     lidar_angle = reorient_lidar_angle(angle)
     idx_float = (deg_to_rad(lidar_angle) - msg.angle_min) // msg.angle_increment
     idx_int = int(round(idx_float))
-
     return msg.ranges[idx_int]
 
 class PointScaler(Node):
+    """Node that loads canvas-space poses, detects board distance, and computes real-world coordinates."""
 
     def __init__(self, trace):
         super().__init__('point_scaler')
 
-        # Get the ROS_DOMAIN_ID aka robot number
+        # Determine robot ID through ROS_DOMAIN_ID
         ros_domain_id = os.getenv("ROS_DOMAIN_ID", "0")
         try:
             if int(ros_domain_id) < 10:
@@ -59,63 +49,40 @@ class PointScaler(Node):
             ros_domain_id = "00"
         self.get_logger().info(f'ROS_DOMAIN_ID: {ros_domain_id}')
 
-        # Arm joint angles publisher
-        self.angles_pub = self.create_publisher(
-            ArmJointAngles, 
-            f'/tb{ros_domain_id}/target_joint_angles', 
-            10
-        )
-
-        # Load angles from file
+        # Load the directory of saved canvas poses
         self.trace_dir = Path("src/DRACO/traces") / trace
         if not self.trace_dir.is_dir():
             raise FileNotFoundError(f"Trace directory not found: {self.trace_dir}")
     
-        # Current index for publishing
+        # Index and storage
         self.current_index = 0
-        
         self.canvas_points = []
         self.real_world_points = []
         self.curr_file_name = ""
 
-        #LiDAR reorient
-        self.cmd_pub = self.create_publisher(Twist, '/cmd_vel', 10)
-        # self.odom_sub = self.create_subscription(
-        #     Odometry, '/odom', self.odom_callback, 10
-        # )
-        # self.current_yaw = None
-        self.lidar_sub = self.create_subscription(LaserScan, f'/tb{ros_domain_id}/scan', self.lidar_callback, 10)
+        # LiDAR subscription for board detection
+        self.lidar_sub = self.create_subscription(
+            LaserScan,
+            f'/tb{ros_domain_id}/scan',
+            self.lidar_callback,
+            10
+        )
 
+        # Board detection state
         self.board_found = False
         self.points_read = False
         self.board_distance = -1
-        self.marker_length = 0.06 
-
-    def odom_callback(self, msg):
-        q = msg.pose.pose.orientation
-        self.current_yaw = quat_to_yaw(q.x, q.y, q.z, q.w)
+        self.marker_length = 0.065 
+        self.forward_offset = 0.104
 
     def find_board(self, msg):
-        # Rotate to face min_idx later
+        """Determine board distance using LiDAR beam at 0 degrees."""
         self.board_found = True
-        self.board_distance = distance_at_angle(msg, 0)
-
+        self.board_distance = distance_at_angle(msg, 0) - self.forward_offset
         return
     
-        # min_dist = float('inf')
-        # min_idx = -1
-
-        # for idx, d in enumerate(msg.ranges):
-        #     if d < msg.range_min or d > msg.range_max or math.isnan(d):
-        #         continue
-            
-        #     if d < min_dist:
-        #         min_dist = d
-        #         min_idx = idx
-    
     def lidar_callback(self, msg):
-        self.get_logger().info("Hello")
-        # Initialize beam indices if not set
+        """Process LiDAR readings and, once the board is found, load canvas points."""
         if not self.board_found:
             self.find_board(msg)
         elif not self.points_read:
@@ -124,6 +91,7 @@ class PointScaler(Node):
             rclpy.shutdown()
     
     def read_canvas_points(self):
+        """Load canvas-space stroke segments from saved NPZ files."""
         for file in sorted(self.trace_dir.glob("*.npz")):
             self.get_logger().info(f"Loading trace: {file}")
 
@@ -140,75 +108,43 @@ class PointScaler(Node):
             )
 
             self.compute_real_coords()
-    
-    # def compute_real_coords(self):
-    #     cy = 0.0
-    #     cz = 0.15
-    #     h = 0.17
-    #     m = self.marker_length
-    #     # m = 0
-
-    #     self.get_logger().info(f"Board origin: {h}, {cy}, {cz}")
-
-    #     real_length = 0.06
-    #     canvas_length = 200
-    #     scale = real_length / canvas_length
-
-    #     for p in self.canvas_points:
-    #         z = cz + (scale * p[1])
-    #         w = -1 * (cy + (scale * p[0]))
-
-    #         hyp = math.sqrt((w * w) + (h * h))
-    #         ratio = (hyp - m) / hyp
-
-    #         x = ratio * h
-    #         y = ratio * w
-
-    #         theta = math.atan(y / x) / 2
-
-    #         self.real_world_points.append([x, y, z, 0.0, 0.0, math.sin(theta), math.cos(theta)])
-
-    #     self.write_points()
 
     def compute_real_coords(self):
+        """Convert canvas coordinates to real-world claw-frame target positions."""
         self.real_world_points = []
         cy = 0.0
         cz = 0.15
 
         M = self.marker_length
-        h = 0.17  # forward (x)
+        h = 0.17  # forward distance (x-axis)
 
-        self.get_logger().info(f"Board origin: {h}, {cy}, {cz}")
-        self.get_logger().info(f"Real board dist: {self.board_distance}, ({self.board_distance - h})")
-
+        # Pixel-to-meter scale factor
         real_length = 0.07
         canvas_length = 200
         scale = real_length / canvas_length
 
+        # Convert each canvas point into a world-frame pose
         for p in self.canvas_points:
-            # Point on board in world frame:
-            v = cz + (scale * p[1])          # z (up)
-            w = -1 * (cy + (scale * p[0]))   # y (left)
+            v = cz + (scale * p[1])          # z direction
+            w = -1 * (cy + (scale * p[0]))   # y direction (sign flip)
 
-            # Direction from base B = (0, cy, cz) to board point P = (h, w, v)
+            # Vector from reference point (0, cy, cz) to board point (h, w, v)
             dx = h
             dy = w - cy
             dz = v - cz
 
             L = math.sqrt(dx*dx + dy*dy + dz*dz)
             if L < 1e-8:
-                # Degenerate, skip or handle separately
-                continue
+                continue  # Avoid division by zero
 
-            # Offset along line from B toward P by M
+            # Move claw back along the line by marker length
             offset_ratio = (L - M) / L
 
-            # New point P' = B + offset_ratio * d
-            x = offset_ratio * dx          # B.x = 0
+            x = offset_ratio * dx       
             y = cy + offset_ratio * dy
             z = cz + offset_ratio * dz
 
-            # Rotation: +x points along d = (dx, dy, dz)
+            # Compute quaternion that orients x-axis along direction vector
             qx = 0.0
             qy = -dz / math.sqrt(2.0 * L * (L + dx))
             qz =  dy / math.sqrt(2.0 * L * (L + dx))
@@ -219,15 +155,15 @@ class PointScaler(Node):
         self.write_points()
 
     def write_points(self):
-        """Save all poses in drawing order as npz file"""
+        """Save the resulting world-frame poses to an NPZ file."""
         if len(self.real_world_points) == 0:
             print("No poses to save. Please draw something first.")
             return
         
-        # Convert to numpy array: shape (N, 7)
+        # Convert to array
         poses_array = np.array(self.real_world_points, dtype=np.float32)
         
-        # Default save directory: current directory
+        # Save into matching rposes file
         cfile = Path(self.curr_file_name) 
         rposes_file_name = cfile.stem.replace("_cposes", "_rposes") + cfile.suffix
         rposes_path = self.trace_dir / rposes_file_name
@@ -237,9 +173,10 @@ class PointScaler(Node):
         abs_path = rposes_path.resolve()
         self.get_logger().info(f"Saved {len(self.real_world_points)} poses to: {abs_path}")
         self.get_logger().info(f"Pose array shape: {poses_array.shape}")
-        
+
 
 def main(args=None):
+    """Entry point for the point scaler node."""
     parser = argparse.ArgumentParser(
         description="Scale canvas points to real world coordinates"
     )
@@ -247,10 +184,9 @@ def main(args=None):
         '--trace',
         type=str,
         required=True,
-        help='Trace directory of .npz files canvas poses (shape: (N, 2))'
+        help='Trace directory of .npz files containing canvas poses'
     )
     
-    # Parse known args to avoid conflicts with rclpy
     parsed_args, unknown = parser.parse_known_args()
     
     rclpy.init(args=args)
@@ -258,7 +194,7 @@ def main(args=None):
     try:
         point_scaler = PointScaler(parsed_args.trace)
         
-        time.sleep(2)  # Wait for publisher to set up
+        time.sleep(2)  # Allow node to initialize before spinning
         rclpy.spin(point_scaler)
         
     except Exception as e:
