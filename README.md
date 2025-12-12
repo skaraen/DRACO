@@ -10,13 +10,17 @@ The goal of this project is to enable a robot arm to reproduce user-drawn traces
 
 ## Demo Videos
 
-[drawing hello](videos/hello_demo.mp4)
+### Drawing “hello”
+https://github.com/your_repo_path/videos/hello_demo.mp4
 
-[drawing a smiley face](videos/smile_demo.mp4)
+### Drawing a smiley face
+https://github.com/your_repo_path/videos/smile_demo.mp4
 
-[drawing a car](videos/car_demo.mp4)
+### Drawing a car
+https://github.com/your_repo_path/videos/car_demo.mp4
 
-[drawing a scenery](videos/scenery_demo.mp4)
+### Drawing a scenery
+https://github.com/your_repo_path/videos/scenery_demo.mp4
 
 
 ## Execution
