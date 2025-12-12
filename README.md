@@ -5,7 +5,7 @@ Flow matching-based Robot Arm Controller
 
 The goal of this project is to enable a robot arm to reproduce user-drawn traces in real time using a flow matching generative model. A user draws a 2D trace in a simple GUI, and the system converts it into smooth joint-angle trajectories that allow the robot arm to draw the same trace on a whiteboard. This project is interesting because it combines real-time human input, generative modeling, and robot control. Traditional inverse kinematics and trajectory smoothing methods often produce jerky motion or fail for curved paths. Vision-based approaches depend heavily on lighting and camera calibration. Flow matching provides a fast, data-driven way to generate continuous trajectories directly in joint space, which makes it well-suited for real-time drawing. When the user draws a stroke in the GUI, the robot moves its arm to recreate the same motion with a marker.
 
-<img width="664" height="368" alt="Screenshot 2025-12-11 at 4 12 27 PM" src="https://github.com/user-attachments/assets/df57845a-6336-498b-9800-8d0130b2dac2" />
+<img width="252" height="381" alt="Screenshot 2025-12-11 at 5 51 06 PM" src="https://github.com/user-attachments/assets/38c8096e-4f72-4e06-94df-b57c08ba5f7e" />
 
 
 ## Demo Videos
