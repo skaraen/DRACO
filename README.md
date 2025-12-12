@@ -3,9 +3,7 @@ Flow matching-based Robot Arm Controller
 
 ## Project description
 
-DRACO connects digital sketching to physical robotics. The system allows a user to draw on a computer screen, and a robot with 4 joints copies the drawing onto a whiteboard using a marker.
-
-The project is unique because it replaces traditional Inverse Kinematics (IK) with Flow Matching. Instead of using standard formulas to calculate angles, we use this machine learning technique to generate the robot's motion. The system converts 2D screen pixels into real-world targets and uses the model to guide the arm. 
+The goal of this project is to enable a robot arm to reproduce user-drawn traces in real time using a flow matching generative model. A user draws a 2D trace in a simple GUI, and the system converts it into smooth joint-angle trajectories that allow the robot arm to draw the same trace on a whiteboard. This project is interesting because it combines real-time human input, generative modeling, and robot control. Traditional inverse kinematics and trajectory smoothing methods often produce jerky motion or fail for curved paths. Vision-based approaches depend heavily on lighting and camera calibration. Flow matching provides a fast, data-driven way to generate continuous trajectories directly in joint space, which makes it well-suited for real-time drawing. When the user draws a stroke in the GUI, the robot moves its arm to recreate the same motion with a marker.
 
 <img width="664" height="368" alt="Screenshot 2025-12-11 at 4 12 27 PM" src="https://github.com/user-attachments/assets/df57845a-6336-498b-9800-8d0130b2dac2" />
 
@@ -108,7 +106,7 @@ Despite these advantages, limitations remain. Flow-matching models, like diffusi
 
 ### 3. Flow Matching Model Architecture
 
-**Purpose**: Neural network that predicts joint-angle velocity conditioned on pose
+**Purpose**: The flow matching model learns a continuous vector field that maps noise to valid joint-angle configurations for points on the whiteboard. We collect training data by sampling joint angles on the Turtlebot arm and recording the resulting 3D claw positions. Because the data come from real robots, the model learns to account for mechanical noise, minor inaccuracies, and other effects that a pure inverse kinematics simulation would not capture. During inference, the model generates joint angles with lower latency than diffusion models, enabling real-time drawing.
 
 **Key Files**:
 - `flow_matching_model/train_fl_pose.py` (model definition)
@@ -264,8 +262,6 @@ For each batch:
 **Key Code Components**:
 - `ResetRobot` class: Publishes home pose on initialization
 - `reset_arm()`: Publishes `[0, -1.494, 0.508, 1.033]` joint angles
-
-
 
 
 ## Challenges
