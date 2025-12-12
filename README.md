@@ -43,13 +43,11 @@ One thing need to notice is that, if your internet is lagging, the drawing on th
 
 ## Prior Research and Identified Gaps
 
-Recent advances in flow-matching models (specifically diffusion models) have shown growing promise in robotic manipulation, particularly in trajectory generation and continuous-control tasks. Unlike diffusion models, which require many iterative denoising steps, flow matching learns a continuous vector field that transports samples from noise to data in a single integration pass, enabling significantly faster inference while retaining the ability to model complex action distributions [1]. Recent work demonstrates that flow-based and rectified-flow formulations can effectively learn robot manipulation behaviors in high-dimensional spaces by conditioning the learned flow on observations or task goals [2]. Their efficiency and stability make them well-suited for generating smooth robot trajectories under real-time constraints.
+Recent advances in diffusion models have shown remarkable success in robotic manipulation, particularly in trajectory planning tasks [1], and they can effectively learn complex robot manipulation behaviors by representing action distributions as conditional diffusion models [2]. Diffusion models stand out with their ability to model multi-modal distributions and their robustness to high-dimensional input and output spaces [1], making them well-suited for generating smooth robot trajectories. Prior work, such as Motion Planning Diffusion, has demonstrated that diffusion models can effectively encode trajectory distributions and sample collision-free paths for robot arms [3]. Traditional approaches to robot-arm task completion typically rely on a combination of inverse kinematics and trajectory smoothing techniques [4]. Also, recent researcher found that deep reinforcement learning can have the ability to map the visual inputs to robot’s actions [5] as well, which shows that their effectiveness in contact-rich manipulation tasks. 
 
-Prior trajectory-planning approaches for robot arms typically rely on a combination of inverse kinematics solvers and trajectory-smoothing algorithms [3]. Deep reinforcement learning has also shown the ability to map visual inputs directly to robot actions, particularly for contact-rich tasks [4]. However, both IK-based and RL-based pipelines struggle to balance multi-modality, smoothness, and real-time responsiveness simultaneously.
+Although there has been significant research on the application of diffusion models in robotics, several limitations remain regarding generalizability. Most diffusion-based systems rely heavily on the quality and diversity of their training data, which constrains their ability to handle outlier or unseen scenarios [1]. While expanding the dataset can improve generalization, it proportionally increases the computational cost of training. 
 
-Diffusion-based motion-generation methods have recently shown strong performance in encoding multi-modal trajectory distributions for robotic planning, but are constrained by slow sampling because their iterative denoising process introduces latency [5, 6]. Flow matching directly addresses this limitation by replacing the multi-step reverse diffusion process with a single ODE integration, dramatically improving sampling speed and making the models substantially more practical for interactive robotic applications.
-
-Despite these advantages, limitations remain. Flow-matching models, like diffusion models, still depend heavily on the quality and diversity of their training data, which impacts their ability to generalize to unseen or outlier scenarios [7]. Scaling datasets can improve robustness but increases training cost proportionally. Moreover, although flow matching offers faster inference, its real-time performance still depends on efficient ODE solvers and optimized GPU execution—a particularly critical factor for our project, where the robot must reproduce user-drawn traces with minimal latency. Finally, there has been limited prior research on mapping *user-provided graphical inputs* (such as sketches or traces) directly to robot-arm trajectories using flow-matching models, an area we aim to explore further.
+Another major limitation lies in the inference speed of diffusion models. Their iterative denoising process requires multiple sampling steps, making real-time control and continuous motion generation computationally expensive. This latency challenge restricts their applicability in time-sensitive robotic tasks, highlighting the need for faster generative methods such as flow matching, which replaces multi-step denoising with a single continuous transformation. Flow matching greatly reduces sampling time, making it far more suitable for interactive applications like real-time trajectory generation and robot drawing.
 
 ## System Architecture
 ### 1. Canvas Drawing Interface
@@ -280,19 +278,12 @@ In the future, we would like to to use the camera in the system. The robot would
 
 ## References
 
-1. Lipman, Yaron, et al. “Flow Matching for Generative Modeling.” *Advances in Neural Information Processing Systems*, 2023. arXiv:2210.02747. https://arxiv.org/abs/2210.02747.
-
-2. Liu, Xingyuan, et al. “Flow Policy: Momentum-Driven Decision Making with Rectified Flows.” *Proceedings of the 41st International Conference on Machine Learning*, 2024. arXiv:2402.01125. https://arxiv.org/abs/2402.01125.
-
-3. Siciliano, Bruno, et al. *Robotics: Modelling, Planning and Control*. Springer, 2009. https://doi.org/10.1007/978-1-84628-642-1.
-
-4. Levine, Sergey, et al. “End-to-End Training of Deep Visuomotor Policies.” *Journal of Machine Learning Research*, vol. 17, no. 39, 2016, pp. 1–40. http://jmlr.org/papers/v17/15-522.html.
-
-5. Janner, Michael, et al. “Diffuser: Diffusion Models for Sequential Decision Making.” *Proceedings of the 39th International Conference on Machine Learning*, 2022. arXiv:2205.09991. https://arxiv.org/abs/2205.09991.
-
-6. Chi, Cheng, et al. “Diffusion Motion Planning.” *Robotics: Science and Systems*, 2023. arXiv:2309.15940. https://arxiv.org/abs/2309.15940.
-
-7. Kingma, Diederik P., et al. “Variational Diffusion Models.” *Advances in Neural Information Processing Systems*, 2021. arXiv:2107.00630. https://arxiv.org/abs/2107.00630.
+[1] Rosa Wolf, Yitian Shi, Sheng Liu, and Rania Rayyes. Diffusion models for robotic manipulation: a survey. Frontiers in Robotics and AI, Volume 12 - 2025, 2025.
+[2] Cheng Chi, Zhenjia Xu, Siyuan Feng, Eric Cousineau, Yilun Du, Benjamin Burchfiel, Russ Tedrake, and Shuran Song. Diffusion policy: Visuomotor policy learning via action diffusion, 2024.
+[3] Joao Carvalho, An T. Le, Mark Baierl, Dorothea Koert, and Jan Peters. Motion planning diffusion: Learning and planning of robot motions with diffusion models, 2024.
+[4] Youdong Chen, Ling Li, and Xudong Ji. Smooth and accurate trajectory planning for industrial robots. Advances in Mechanical Engineering, 6:342137, 2014.
+[5] Jiang Hua, Liangcai Zeng, Gongfa Li, and Zhaojie Ju. Learning for a robot: Deep
+reinforcement learning, imitation learning, transfer learning. Sensors, 21(4), 2021.
 
 
 
