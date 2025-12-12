@@ -9,19 +9,17 @@ The goal of this project is to enable a robot arm to reproduce user-drawn traces
 
 ## Demo Videos
 
-## Demo Videos
-
 ### Drawing “hello”
-<video src="https://raw.githubusercontent.com/skaraen/DRACO/main/videos/hello_demo.mp4" controls width="500"></video>
+https://github.com/skaraen/DRACO/blob/main/videos/hello_demo.mp4
 
 ### Drawing a smiley face
-<video src="https://raw.githubusercontent.com/skaraen/DRACO/main/videos/smile_demo.mp4" controls width="500"></video>
+https://github.com/skaraen/DRACO/blob/main/videos/smile_demo.mp4
 
 ### Drawing a car
-<video src="https://raw.githubusercontent.com/skaraen/DRACO/main/videos/car_demo.mp4" controls width="500"></video>
+https://github.com/skaraen/DRACO/blob/main/videos/car_demo.mp4
 
 ### Drawing a scenery
-<video src="https://raw.githubusercontent.com/skaraen/DRACO/main/videos/scenery_demo.mp4" controls width="500"></video>
+https://github.com/skaraen/DRACO/blob/main/videos/scenery_demo.mp4
 
 
 
